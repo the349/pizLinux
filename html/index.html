@@ -78,6 +78,33 @@
                 height:80%;
                 border:darkgray 1px solid;
             }
+            .btn {
+                border:none;
+                padding:3px;
+            }
+            .btn-yellow {
+                background:yellow;
+            }
+            .btn-red {
+                background:red;
+            }
+            #login {
+                background:rgba(0, 0, 0, 0.5);
+                width:100%;
+                height:100%;
+                padding-top:20%;
+                position:absolute;
+                top:0px;
+                left:0px;
+            }
+            #login input {
+                width:50%;
+                height:2rem;
+                border-radius:5px;
+                border:none;
+                padding:none;
+                margin:none;
+            }
             @keyframes open {
                 0% {
                     transform:rotate(0deg);
@@ -160,8 +187,12 @@
     <body onload="runScripts()">
         <header>
             <div id="statbar">
-                <div id="time">
+                <div id="time" style="display:inline-block;">
                     {{ time }}
+                </div>
+                <div id="battery" style="display:inline-block;font-size:1.3rem;"></div>
+                <div id="battery-icon" style="display:none;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512" width="30"><path fill="white" d="M544 160v64h32v64h-32v64H64V160h480m16-64H48c-26.51 0-48 21.49-48 48v224c0 26.51 21.49 48 48 48h512c26.51 0 48-21.49 48-48v-16h8c13.255 0 24-10.745 24-24V184c0-13.255-10.745-24-24-24h-8v-16c0-26.51-21.49-48-48-48zm-48 96H96v128h416V192z"/></svg>
                 </div>
                 <hr>
                 <a onclick="openWin('#theMenu')"><svg style="float: left;margin-top: -5px;margin-right: 2px;"width="30.000000000000004" height="30.000000000000004" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"><g><rect stroke="#000000" fill="#ff3b00" stroke-width="0.5" stroke-dasharray="null" stroke-linejoin="null" stroke-linecap="null" x="0.3" y="0.3" width="29.40866" height="29.40866" id="svg_1"/><path id="svg_2" d="m1.2661,10.54849l9.388,0l0,-9.388l8.83753,0l0,9.388l9.38799,0l0,8.83753l-9.38799,0l0,9.38799l-8.83753,0l0,-9.38799l-9.388,0l0,-8.83753z" stroke-linecap="null" stroke-linejoin="null" stroke-dasharray="null" stroke-width="0.2" stroke="#000000" fill="#ffc300"/></g></svg></a>
@@ -171,14 +202,38 @@
         </header>
         <div id="desktop">
             <div id="theMenu">
+                <button class="btn btn-yellow" style="width:20%;height:6%;color:black;float:right;" onclick="openWin('#')">
+                    Close
+                </button>
                 <h1 style="margin-left:1%;">
                     theMenu
                 </h1>
                 <hr>
                 <div class="apps">
-                    
+                    <ul>
+                        <li onclick="openWin('#theBrowser')">theBrowser</li>
+                    </ul>
                 </div>
+                <button class="btn btn-red" style="width:30%;height:6%;float:right;" onclick="sessionStorage.clear();document.getElementById('login').style.display = 'block';">
+                    End Session
+                </button>
             </div>
+        </div>
+        <div id="login">
+            <center>
+                <svg style="border-radius:33%;" width="60.000000000000014" height="60.000000000000014" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg"><g><title>Layer 1</title><g id="svg_3" stroke="null"><rect y="0.3" x="0.3" width="59.60929" stroke-width="0.5" stroke-linejoin="null" stroke-linecap="null" stroke-dasharray="null" id="svg_1" height="59.5037" fill="#ff3b00" stroke="#000000"/><path stroke-width="0.2" stroke-linejoin="null" stroke-linecap="null" stroke-dasharray="null" id="svg_2" fill="#ffc300" d="m2.25822,21.03617l19.02882,0l0,-18.99511l17.91305,0l0,18.99511l19.0288,0l0,17.88132l-19.0288,0l0,18.99509l-17.91305,0l0,-18.99509l-19.02882,0l0,-17.88132z" stroke="#000000"/></g></g></svg>
+                <br>
+                <h1 style="color:white;">
+                    Login
+                </h1>
+                <input placeholder="Username" autocomplete="off" onchange="sessionStorage.setItem('login', this.value)">
+                <br>
+                <br>
+                <input placeholder="Password" type="password" autocomplete="off" onchange="sessionStorage.setItem('password', this.value)">
+                <br>
+                <br>
+                <input type="button" value="Login" style="background:green;color:white;" onclick="checkLogin()">
+            </center>
         </div>
         <script>
             function checkTime() {
@@ -188,10 +243,17 @@
                 var second = timeRaw.getSeconds()
                 if(hour > 12) {hour = hour - 12}
                 if(minute < 10) {minute = "0" + minute}
-                document.getElementById('time').innerHTML = hour + ":" + minute
+                document.getElementById('time').innerHTML = hour + ":" + minute                
+            }
+            function checkLogin() {
+                if(sessionStorage.login && sessionStorage.password) {
+                    document.getElementById('login').style.display = "none"
+                }
             }
             function runScripts() {
                 var timeLoop = setInterval(checkTime, 500)
+                var batteryLoop = setInterval(checkBattery, 501)
+                checkLogin()
             }
         </script>
         <script id="speaker.js">
@@ -203,6 +265,11 @@ window.speechSynthesis.speak(msg);}
             function openWin(i) {
                 var win = i
                 location.href = win
+            }
+        </script>
+        <script id="battery.js">
+            function checkBattery() {
+                navigator.getBattery().then(battery => {if(battery.level < 0.20) {document.getElementById("battery").innerHTML = "your battery is " + battery.level * 100 + "% full"};if(battery.charging) {document.getElementById("battery-icon").style.display = "inline-block"};if(!battery.charging) {document.getElementById("battery-icon").style.display = "none"}})
             }
         </script>
     </body>
